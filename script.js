@@ -1,5 +1,5 @@
 // Import Tesseract if using npm
-const Tesseract = require('tesseract.js');
+// const Tesseract = require('tesseract.js');
 
 document.getElementById('fileInput').addEventListener('change', handleFileSelect);
 
@@ -16,17 +16,29 @@ function handleFileSelect(event) {
             canvas.width = img.width;
             canvas.height = img.height;
             ctx.drawImage(img, 0, 0);
-            extractTextFromImage(canvas);
+            extractTextFromImage(canvas, ctx);
         };
         img.src = e.target.result;
     };
     reader.readAsDataURL(file);
 }
 
-function extractTextFromImage(canvas) {
-    Tesseract.recognize(canvas, 'eng')
-        .then(({ data: { text } }) => {
-            displayExtractedText(text);
+function extractTextFromImage(canvas, ctx) {
+    const rec = Tesseract.recognize(canvas, 'eng', {
+        logger: ({ status, progress }) => {
+            console.log(`Status: ${status}, Progress: ${Math.round(progress * 100)}%`);
+        }
+        })
+        .then(({ data: { lines } }) => {
+            console.log(data);
+            lines.forEach(line => {
+                const { bbox, text } = line;
+                console.log(line);
+                const { x0, y0, x1, y1 } = bbox;
+                ctx.strokeStyle = 'red';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(x0, y0, x1 - x0, y1 - y0);
+            });
         })
         .catch(error => console.error(error));
 }
